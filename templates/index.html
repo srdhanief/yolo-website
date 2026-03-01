@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Kurshi's Project</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+/* BACKGROUND DESIGN */
+
+body{
+
+margin:0;
+
+font-family:Segoe UI;
+
+background:
+
+linear-gradient(120deg,#f6f9fc,#e9f2ff);
+
+}
+
+
+/* HEADER */
+
+.header{
+
+text-align:center;
+
+padding:25px;
+
+font-size:34px;
+
+font-weight:bold;
+
+color:#2c3e50;
+
+}
+
+
+.subheader{
+
+text-align:center;
+
+font-size:18px;
+
+margin-bottom:20px;
+
+color:#555;
+
+}
+
+
+/* MAIN CONTAINER */
+
+.container{
+
+margin:auto;
+
+width:80%;
+
+max-width:950px;
+
+background:white;
+
+padding:35px;
+
+border-radius:20px;
+
+box-shadow:0px 10px 30px rgba(0,0,0,0.15);
+
+}
+
+
+/* UPLOAD BOX */
+
+.upload-box{
+
+border:2px dashed #3498db;
+
+padding:50px;
+
+border-radius:15px;
+
+text-align:center;
+
+cursor:pointer;
+
+transition:0.3s;
+
+background:#fafcff;
+
+}
+
+
+.upload-box:hover{
+
+background:#f0f7ff;
+
+transform:scale(1.02);
+
+}
+
+
+/* BUTTON */
+
+button{
+
+margin-top:20px;
+
+padding:14px 40px;
+
+font-size:18px;
+
+background:#3498db;
+
+color:white;
+
+border:none;
+
+border-radius:10px;
+
+cursor:pointer;
+
+transition:0.3s;
+
+}
+
+
+button:hover{
+
+background:#217dbb;
+
+transform:scale(1.05);
+
+}
+
+
+/* PREVIEW */
+
+.preview{
+
+text-align:center;
+
+}
+
+
+.preview img,video{
+
+margin-top:20px;
+
+max-width:500px;
+
+border-radius:10px;
+
+box-shadow:0px 5px 20px rgba(0,0,0,0.2);
+
+}
+
+
+/* OUTPUT */
+
+.output-card{
+
+margin-top:40px;
+
+padding:25px;
+
+background:#f8fbff;
+
+border-radius:15px;
+
+box-shadow:0px 5px 20px rgba(0,0,0,0.15);
+
+text-align:center;
+
+}
+
+
+.output-card img,video{
+
+max-width:650px;
+
+border-radius:10px;
+
+box-shadow:0px 10px 25px rgba(0,0,0,0.25);
+
+}
+
+
+/* DOWNLOAD BUTTON */
+
+.download{
+
+background:#2ecc71;
+
+}
+
+
+.download:hover{
+
+background:#27ae60;
+
+}
+
+
+/* LOADING SPINNER */
+
+.loader{
+
+border:8px solid #eee;
+
+border-top:8px solid #3498db;
+
+border-radius:50%;
+
+width:70px;
+
+height:70px;
+
+animation:spin 1s linear infinite;
+
+margin:auto;
+
+margin-top:20px;
+
+display:none;
+
+}
+
+
+.loadingText{
+
+text-align:center;
+
+margin-top:10px;
+
+font-size:18px;
+
+color:#444;
+
+display:none;
+
+}
+
+
+/* ANIMATION */
+
+@keyframes spin{
+
+0% { transform:rotate(0deg); }
+100% { transform:rotate(360deg); }
+
+}
+
+
+/* FOOTER */
+
+.footer{
+
+text-align:center;
+
+margin-top:20px;
+
+color:#777;
+
+font-size:14px;
+
+}
+
+
+/* SOFT BACKGROUND DESIGN */
+
+body::before{
+
+content:"";
+
+position:fixed;
+
+top:-200px;
+
+left:-200px;
+
+width:500px;
+
+height:500px;
+
+background:#dbeeff;
+
+border-radius:50%;
+
+z-index:-1;
+
+}
+
+
+body::after{
+
+content:"";
+
+position:fixed;
+
+bottom:-200px;
+
+right:-200px;
+
+width:500px;
+
+height:500px;
+
+background:#eaf4ff;
+
+border-radius:50%;
+
+z-index:-1;
+
+}
+
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+
+Kurshi's Project🙋🏻‍♀️✨
+
+</div>
+
+<div class="header">
+
+Object Detection in Autonomous Vehicles 🚗
+
+</div>
+
+
+<div class="subheader">
+
+YOLO26 Object Detection
+
+</div>
+
+
+
+<div class="container">
+
+
+<form id="uploadForm" action="/predict" method="post" enctype="multipart/form-data">
+
+
+<div class="upload-box" onclick="document.getElementById('fileInput').click();">
+
+<h2>Upload Image or Video</h2>
+
+<p>Click Here or Drag File</p>
+
+<input type="file" id="fileInput" name="file" hidden required onchange="previewFile()">
+
+</div>
+
+
+
+<div class="preview" id="preview">
+
+</div>
+
+
+<center>
+
+<button>
+
+Start Detection
+
+</button>
+
+</center>
+
+
+</form>
+
+
+
+<div class="loader" id="loader"></div>
+
+<div class="loadingText" id="loadingText">
+
+Running YOLO26 Model...
+
+</div>
+
+
+
+{% if output %}
+
+<div class="output-card">
+
+<h2>Detection Result</h2>
+
+
+{% if ".mp4" in output %}
+
+<video controls>
+
+<source src="{{output}}" type="video/mp4">
+
+</video>
+
+{% else %}
+
+<img src="{{output}}">
+
+{% endif %}
+
+
+<br>
+
+<a href="{{output}}" download>
+
+<button class="download">
+
+Download Result
+
+</button>
+
+</a>
+
+
+</div>
+
+{% endif %}
+
+
+
+</div>
+
+
+
+<div class="footer">
+
+YOLO26 | Self Driving Car Dataset | STET College
+
+</div>
+
+
+
+<script>
+
+
+function previewFile(){
+
+const file = document.getElementById("fileInput").files[0];
+
+const preview = document.getElementById("preview");
+
+preview.innerHTML="";
+
+
+if(file.type.includes("image")){
+
+const reader = new FileReader();
+
+reader.onload=function(){
+
+preview.innerHTML="<img src='"+reader.result+"'>";
+
+}
+
+reader.readAsDataURL(file);
+
+}
+
+
+if(file.type.includes("video")){
+
+const url = URL.createObjectURL(file);
+
+preview.innerHTML="<video controls src='"+url+"'></video>";
+
+}
+
+}
+
+
+document.getElementById("uploadForm").addEventListener("submit", function(){
+
+document.getElementById("loader").style.display="block";
+
+document.getElementById("loadingText").style.display="block";
+
+});
+
+
+</script>
+
+
+</body>
+
+</html>
