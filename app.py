@@ -4,10 +4,14 @@ import os
 import uuid
 import shutil
 
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "best.pt")
+
+
 
 model = YOLO(MODEL_PATH)
 
@@ -28,52 +32,46 @@ def home():
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
+        print("Request received")
+
+        if "file" not in request.files:
+            print("No file in request")
+            return "No file uploaded"
 
         file = request.files["file"]
 
-        filename = file.filename
+        if file.filename == "":
+            print("Empty filename")
+            return "Empty filename"
 
-        upload_path = os.path.join("static/uploads", filename)
+        file_ext = file.filename.split(".")[-1]
+        unique_name = f"{uuid.uuid4()}.{file_ext}"
 
+        upload_path = os.path.join(UPLOAD_FOLDER, unique_name)
+        output_path = os.path.join(OUTPUT_FOLDER, unique_name)
+
+        print("Saving file to:", upload_path)
         file.save(upload_path)
 
-        file_ext = filename.split(".")[-1].lower()
+        print("Running model...")
+        results = model(upload_path)
 
-        output_path = os.path.join("static/outputs", filename)
+        print("Saving result to:", output_path)
+        results[0].save(filename=output_path)
 
-
-        if file_ext in ["jpg","jpeg","png"]:
-
-            results = model(upload_path)
-
-            results[0].save(filename=output_path)
-
-
-        elif file_ext in ["mp4","avi","mov"]:
-
-            results = model.predict(
-                source=upload_path,
-                save=True,
-                project="static",
-                name="outputs",
-                exist_ok=True
-            )
-
-            for r in results:
-                video_file = os.path.basename(r.path)
-                output_path = "static/outputs/" + video_file
-
-
-        return render_template(
-            "index.html",
-            output=output_path
-        )
+        print("Success")
+        return render_template("index.html", output=output_path)
 
     except Exception as e:
-        return str(e)
+        print("ERROR OCCURRED:", str(e))
+        import traceback
+        traceback.print_exc()
+        return f"<h1>Error:</h1><pre>{str(e)}</pre>"
+
 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
+
 
 
