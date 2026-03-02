@@ -4,10 +4,9 @@ import os
 import uuid
 import shutil
 
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+
 
 app = Flask(__name__)
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "best.pt")
 
@@ -72,6 +71,7 @@ def predict():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
+
 
 
 
