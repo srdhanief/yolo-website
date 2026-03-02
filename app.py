@@ -11,11 +11,13 @@ MODEL_PATH = os.path.join(BASE_DIR, "best.pt")
 
 model = YOLO(MODEL_PATH)
 
-UPLOAD_FOLDER = "static/uploads"
-OUTPUT_FOLDER = "static/outputs"
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "static/uploads")
+OUTPUT_FOLDER = os.path.join(BASE_DIR, "static/outputs")
+
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
 
 
 @app.route("/")
@@ -73,4 +75,5 @@ def predict():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
+
 
