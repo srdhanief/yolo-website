@@ -1,6 +1,7 @@
 flask
 ultralytics
 gunicorn
-opencv-python-headless
+ultralytics-opencv-headless
 pillow
 numpy
+
