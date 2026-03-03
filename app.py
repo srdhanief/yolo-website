@@ -7,20 +7,19 @@ import shutil
 
 
 app = Flask(__name__)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "best.pt")
 
+model = YOLO("best.pt")
 
-
-model = YOLO(MODEL_PATH)
-
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "static/uploads")
-OUTPUT_FOLDER = os.path.join(BASE_DIR, "static/outputs")
-
+UPLOAD_FOLDER = "static/uploads"
+OUTPUT_FOLDER = "static/outputs"
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
+
+@app.route("/")
+def home():
+    return render_template("index.html")
 
 
 @app.route("/")
@@ -30,47 +29,64 @@ def home():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    try:
-        print("Request received")
 
-        if "file" not in request.files:
-            print("No file in request")
-            return "No file uploaded"
+    file = request.files["file"]
 
-        file = request.files["file"]
+    filename = file.filename
 
-        if file.filename == "":
-            print("Empty filename")
-            return "Empty filename"
+    upload_path = os.path.join("static/uploads", filename)
 
-        file_ext = file.filename.split(".")[-1]
-        unique_name = f"{uuid.uuid4()}.{file_ext}"
+    file.save(upload_path)
 
-        upload_path = os.path.join(UPLOAD_FOLDER, unique_name)
-        output_path = os.path.join(OUTPUT_FOLDER, unique_name)
+    file_ext = filename.split(".")[-1].lower()
 
-        print("Saving file to:", upload_path)
-        file.save(upload_path)
+    output_path = os.path.join("static/outputs", filename)
 
-        print("Running model...")
+
+    # IMAGE DETECTION
+    if file_ext in ["jpg","jpeg","png"]:
+
         results = model(upload_path)
 
-        print("Saving result to:", output_path)
         results[0].save(filename=output_path)
 
-        print("Success")
-        return render_template("index.html", output=output_path)
 
-    except Exception as e:
-        print("ERROR OCCURRED:", str(e))
-        import traceback
-        traceback.print_exc()
-        return f"<h1>Error:</h1><pre>{str(e)}</pre>"
+    elif file_ext in ["mp4","avi","mov"]:
+
+        results = model.predict(
+        source=upload_path,
+        save=True
+        )
+
+        save_dir = results[0].save_dir
+
+        # Find the output video automatically
+        files = os.listdir(save_dir)
+
+        video_file = None
+        for f in files:
+            if f.endswith((".mp4",".avi",".mov")):
+                video_file = f
+            break
+
+        yolo_output = os.path.join(save_dir, video_file)
+
+        output_path = os.path.join("static/outputs", video_file)
+
+        shutil.move(yolo_output, output_path)
+
+
+    return render_template(
+    "index.html",
+    output=output_path.replace("\\","/")
+)
+
 
 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
+
 
 
 
