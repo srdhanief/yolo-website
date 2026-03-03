@@ -1,7 +1,10 @@
 flask
-ultralytics
+ultralytics==8.2.103
 gunicorn
 ultralytics-opencv-headless
 pillow
 numpy
+torch
+torchvision
+
 
