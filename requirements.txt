@@ -1,6 +1,8 @@
 flask
-ultralytics==8.4.19
+ultralytics
 gunicorn
+opencv-python-headless
 pillow
 numpy
-ultralytics-opencv-headless
+torch --index-url https://download.pytorch.org/whl/cpu
+torchvision --index-url https://download.pytorch.org/whl/cpu
