@@ -6,8 +6,8 @@ import shutil
 
 app = Flask(__name__)
 
-# Load YOLOv8 Nano Model
-model = YOLO("best.pt")
+# Load YOLO model safely
+model = YOLO(os.path.join(os.getcwd(), "best.pt"))
 
 UPLOAD_FOLDER = "static/uploads"
 OUTPUT_FOLDER = "static/outputs"
@@ -24,56 +24,57 @@ def home():
 @app.route("/predict", methods=["POST"])
 def predict():
 
-    file = request.files["file"]
+    file = request.files.get("file")
 
-    filename = file.filename
+    if file is None or file.filename == "":
+        return "No file uploaded"
 
-    upload_path = os.path.join("static/uploads", filename)
+    # create unique filename
+    ext = file.filename.split(".")[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
 
+    upload_path = os.path.join(UPLOAD_FOLDER, filename)
     file.save(upload_path)
 
-    file_ext = filename.split(".")[-1].lower()
-
-    output_path = os.path.join("static/outputs", filename)
-
+    file_ext = ext.lower()
+    output_path = os.path.join(OUTPUT_FOLDER, filename)
 
     # IMAGE DETECTION
-    if file_ext in ["jpg","jpeg","png"]:
+    if file_ext in ["jpg", "jpeg", "png"]:
 
         results = model(upload_path)
-
         results[0].save(filename=output_path)
 
-
-    elif file_ext in ["mp4","avi","mov"]:
+    # VIDEO DETECTION
+    elif file_ext in ["mp4", "avi", "mov"]:
 
         results = model.predict(
-        source=upload_path,
-        save=True
+            source=upload_path,
+            save=True
         )
 
         save_dir = results[0].save_dir
-
-        # Find the output video automatically
         files = os.listdir(save_dir)
 
         video_file = None
+
         for f in files:
-            if f.endswith((".mp4",".avi",".mov")):
+            if f.endswith((".mp4", ".avi", ".mov")):
                 video_file = f
-            break
+                break
+
+        if video_file is None:
+            return "Video processing failed"
 
         yolo_output = os.path.join(save_dir, video_file)
-
-        output_path = os.path.join("static/outputs", video_file)
+        output_path = os.path.join(OUTPUT_FOLDER, video_file)
 
         shutil.move(yolo_output, output_path)
 
-
     return render_template(
-    "index.html",
-    output=output_path.replace("\\","/")
-)
+        "index.html",
+        output=output_path.replace("\\", "/")
+    )
 
 
 if __name__ == "__main__":
